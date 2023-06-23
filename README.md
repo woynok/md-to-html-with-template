@@ -1,71 +1,155 @@
-# md-to-html-with-template README
+# 【WorkInProgress】(開発中) markdownを指定のテンプレートでhtmlにする
 
-This is the README for your extension "md-to-html-with-template". After writing up a brief description, we recommend including the following sections.
+## 1. 環境回り
 
-## Features
+tsで書く都合で、highlight.jsだけではrequire('highlight.js')時にエラーが出る。@typesをinstallすると、ts用のコンポーネントが入ってエラーが解消する。
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+```bash
+npm install @types/highlight.js
+```
 
-For example if there is an image subfolder under your extension project workspace:
+## 2. 作りたい機能
 
-\!\[feature X\]\(images/feature-x.png\)
+- [x] 通常のprintHTMLで出力される、`<body></body>`内部を取得
+- [x] rootの `template.html` をもとに テンプレートエンジン を使って markdown の内容を入れる
+- [x] `file://....` を削除する
+- [ ] message-box
+- [ ] code-block
+- [ ] file-name code block
+- [ ] highlight.js
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+`/template/template.html` を下記のように配置する
 
-## Requirements
+```html
+<!DOCTYPE html>
+<html>
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css" />
+    <link href="/code-block.css" rel="stylesheet"/>
+    <title>{{{ title }}}</title>
+</head>
 
-## Extension Settings
+<body class="vscode-body">
+    {{{ contents }}}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="/code-block.js"></script>
+</body>
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+</html>
+```
 
-For example:
+`/code-block.css`
 
-This extension contributes the following settings:
+```css
+#wrapper {
+    padding: 5%;
+    margin: 0 auto;
+}
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+/* CSS Simple Pre Code */
+pre.codeblock {
+    background: #333;
+    white-space: pre;
+    word-wrap: break-word;
+    overflow: auto;
+    margin: 20px 25px;
+    border-radius: 4px;
+    position: relative;
+}
 
-## Known Issues
+pre.codeblock div.name {
+    display: inline-flex;
+    color: #1d1d1de6;
+    background-color: #a7a7a7;
+    position: absolute;
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    line-height: 16px;
+}
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+pre.codeblock div.language {
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 13px;
+    color: #ddd;
+    position: absolute;
+    left: 1px;
+    margin-top: 30px;
+    vertical-align: middle;
+    text-align: center;
+    width: 60px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+}
 
-## Release Notes
+pre.codeblock code {
+    font-family: "Inconsolata", "Monaco", "Consolas", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+    display: block;
+    margin-left: 60px;
+    margin-top: 16px;
+    padding: 4px;
+    border-left: 1px solid #555;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 19px;
+    color: #ddd;
+}
 
-Users appreciate release notes as you update your extension.
+pre.codeblock::after {
+    content: "ダブルクリックで全選択";
+    padding: 0;
+    width: auto;
+    height: auto;
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    font-size: 12px;
+    color: #ddd;
+    line-height: 20px;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: all 1.2s ease;
+}
 
-### 1.0.0
+pre.codeblock:hover::after {
+    opacity: 0;
+    visibility: visible;
+}
+```
 
-Initial release of ...
+`code-block.js`
 
-### 1.0.1
+```js
+var pres = document.querySelectorAll('pre.codeblock code');
+console.log(pres);
+for (var i = 0; i < pres.length; i++) {
+  pres[i].addEventListener("dblclick", function () {
+    var selection = getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(this);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }, false);
+}
+```
 
-Fixed issue #.
 
-### 1.1.0
+### 2.1. テンプレートエンジンについて
 
-Added features X, Y, and Z.
+[popularなので](https://npmtrends.com/jade-vs-mustache-vs-squirrelly) mustache を使う
 
----
+### formatterについて
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+[prettier](https://prettier.io/docs/en/install.html)を使う
