@@ -9,7 +9,7 @@ changelog:
   categories:
     - title: Initial Development 👶
       labels:
-        - Semver-Minor
+        - Semver-Patch
         - sprout
     - title: Breaking Changes 🛠
       labels:
