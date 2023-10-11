@@ -1,24 +1,10 @@
-# 【WorkInProgress】(開発中) markdownを指定のテンプレートでhtmlにする
+# 【WorkInProgress】markdownを指定のテンプレートでhtmlにする
 
-## 1. 環境回り
+## 1. 使い方
 
-tsで書く都合で、highlight.jsだけではrequire('highlight.js')時にエラーが出る。@typesをinstallすると、ts用のコンポーネントが入ってエラーが解消する。
+### 1.1. レンダー時に使うテンプレートの用意
 
-```bash
-npm install @types/highlight.js
-```
-
-## 2. 作りたい機能
-
-- [x] 通常のprintHTMLで出力される、`<body></body>`内部を取得
-- [x] rootの `template.html` をもとに テンプレートエンジン を使って markdown の内容を入れる
-- [x] `file://....` を削除する
-- [ ] message-box
-- [ ] code-block
-- [ ] file-name code block
-- [ ] highlight.js
-
-`/template/template.html` を下記のように配置する
+下記のようなhtmlファイルを作成し、`template/template.html` か、適当なファイルパスに配置する
 
 ```html
 <!DOCTYPE html>
@@ -40,6 +26,35 @@ npm install @types/highlight.js
 
 </html>
 ```
+
+mdファイルの内容が`{{{ contents }}}`に、 `# xxx` のような最初のATXヘッダーが`{{{ title }}}`に入る
+
+### 1.2. mdファイルのレンダー
+
+mdファイルを開いて、`Ctrl+Shift+Alt+P` で mdファイルと同名のhtmlファイルを作成できる。  
+先頭に`<!-- TEMPLATE:template_filepath -->` があれば、そのファイルをテンプレートとして使う。
+
+## 2. 作りたい機能
+
+- [x] 通常のprintHTMLで出力される、`<body></body>`内部を取得
+- [x] rootの `template.html` をもとに テンプレートエンジン を使って markdown の内容を入れる
+- [x] `file://....` を削除する
+- [x] 先頭に `<!-- TEMPLATE:template_filepath -->` があれば、そのファイルをテンプレートとして使う
+- [x] code-block
+- [x] code block with name
+- [ ] message-box
+
+## 3. 作成時のメモ
+
+### 3.1. テンプレートエンジンについて
+
+[popularなので](https://npmtrends.com/jade-vs-mustache-vs-squirrelly) mustache を使う
+
+### 3.2. formatterについて
+
+[prettier](https://prettier.io/docs/en/install.html)を使う
+
+### 3.3. 暫定的なcss, jsについて
 
 `/code-block.css`
 
@@ -144,12 +159,3 @@ for (var i = 0; i < pres.length; i++) {
   }, false);
 }
 ```
-
-
-### 2.1. テンプレートエンジンについて
-
-[popularなので](https://npmtrends.com/jade-vs-mustache-vs-squirrelly) mustache を使う
-
-### formatterについて
-
-[prettier](https://prettier.io/docs/en/install.html)を使う

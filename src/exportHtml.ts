@@ -94,25 +94,14 @@ async function exportHtml(uri?: Uri, outFolder?: string) {
     }
 
     //// Determine document title.
-    // 1. If the document begins with a comment like `<!-- title: Document Title -->`, use it. Empty title is not allow here. (GitHub #506)
-    // 2. Else, find the first ATX heading, and use it.
+    // find the first ATX heading, and use it as title
 
-    const firstLineText = doc.lineAt(0).text;
-    // The lazy quantifier and `trim()` can avoid mistakenly capturing cases like:
-    // <!-- title:-->-->
-    // <!-- title: --> -->
-    let m = /^<!-- title:(.*?)-->/.exec(firstLineText);
-    let title: string | undefined = m === null ? undefined : m[1].trim();
-
-    // Empty string is also falsy.
-    if (!title) {
-        // Editors treat `\r\n`, `\n`, and `\r` as EOL.
-        // Since we don't care about line numbers, a simple alternation is enough and slightly faster.
-        title = doc.getText().split(/\n|\r/g).find(lineText => lineText.startsWith('#') && /^#{1,6} /.test(lineText));
-        if (title) {
-            title = title.replace(/<!--(.*?)-->/g, '');
-            title = title.trim().replace(/^#+/, '').replace(/#+$/, '').trim();
-        }
+    // Editors treat `\r\n`, `\n`, and `\r` as EOL.
+    // Since we don't care about line numbers, a simple alternation is enough and slightly faster.
+    let title = doc.getText().split(/\n|\r/g).find(lineText => lineText.startsWith('#') && /^#{1,6} /.test(lineText));
+    if (title) {
+        title = title.replace(/<!--(.*?)-->/g, '');
+        title = title.trim().replace(/^#+/, '').replace(/#+$/, '').trim();
     }
 
     //// Render body HTML.
@@ -148,7 +137,18 @@ async function exportHtml(uri?: Uri, outFolder?: string) {
     let body = md.render(doc.getText());
 
     let directory = workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath || "";
-    let template = fs.readFileSync(path.join(directory, 'template', 'template.html'), 'utf-8');
+    
+    // let templateFilepath = doc.getWordRangeAtPosition(doc.positionAt(0), regex = 
+
+    // get first line of document for template filepath
+    // if first line matches pattern of <!-- TEMPLATE:some_file_path.html -->, then use that file as template
+    // else use default template (template/template.html)
+    const firstLineText = doc.lineAt(0).text;
+    let hasCustomTemplateFilepath = /^<!-- TEMPLATE:(.*?)-->/.exec(firstLineText);
+    let defaultTemplateFilepath = 'template/template.html';
+    let templateFilepath: string = hasCustomTemplateFilepath === null ? defaultTemplateFilepath : hasCustomTemplateFilepath[1].trim();
+
+    let template = fs.readFileSync(path.join(directory, templateFilepath), 'utf-8');
     let view = {
         title: title ? title : '',
         contents: body,
@@ -191,4 +191,3 @@ function onDidSave(doc: TextDocument) {
         exportHtml();
     }
 }
-
